@@ -11,6 +11,6 @@ export default defineConfig({
     },
   },
   preview: {
-    allowedHosts: ['rifasfrontend-production.up.railway.app'],
+    allowedHosts: ['rifasfrontend-production.up.railway.app', 'rifasfrontend-development.up.railway.app'],
   },
 });
