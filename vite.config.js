@@ -10,4 +10,7 @@ export default defineConfig({
       '/api': process.env.VITE_API_PROXY_TARGET || 'http://localhost:3001',
     },
   },
+  preview: {
+    allowedHosts: ['rifasfrontend-production.up.railway.app'],
+  },
 });
