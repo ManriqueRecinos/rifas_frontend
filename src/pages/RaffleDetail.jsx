@@ -18,6 +18,7 @@ export default function RaffleDetail() {
   const [buyerEmail, setBuyerEmail] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [downloadingPdfId, setDownloadingPdfId] = useState(null);
+  const [sendingPdfId, setSendingPdfId] = useState(null);
 
   useEffect(() => {
     api.get(`/raffles/${id}`)
@@ -140,6 +141,18 @@ export default function RaffleDetail() {
       alert(err.response?.data?.error || 'No se pudo generar el PDF del ticket.');
     } finally {
       setDownloadingPdfId(null);
+    }
+  };
+
+  const handleSendTicketPdf = async (ticketId) => {
+    try {
+      setSendingPdfId(ticketId);
+      await api.post(`/raffles/${id}/tickets/${ticketId}/send-pdf`);
+      alert('PDF reenviado al correo del comprador.');
+    } catch (err) {
+      alert(err.response?.data?.error || 'No se pudo reenviar el PDF del ticket.');
+    } finally {
+      setSendingPdfId(null);
     }
   };
 
@@ -304,6 +317,14 @@ export default function RaffleDetail() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleSendTicketPdf(t.id)}
+                      disabled={sendingPdfId === t.id}
+                      style={{ background: 'transparent', color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: '8px', padding: '8px 12px', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      {sendingPdfId === t.id ? 'Enviando PDF...' : 'Reenviar PDF por correo'}
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleDownloadTicketPdf(t.id, t.ticket_number)}
