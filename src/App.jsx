@@ -1,36 +1,48 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import Navbar from './components/Navbar';
-import RifaDetail from './pages/RifaDetail';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import { AuthProvider } from './context/AuthContext';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './hooks/useAuth';
+import useIsMobile from './hooks/useIsMobile';
+import Navbar           from './components/Navbar';
+import Home             from './pages/Home';
+import { Login, Register } from './pages/Auth';
+import Dashboard        from './pages/Dashboard';
+import CreateRaffle     from './pages/CreateRaffle';
+import RaffleDetail     from './pages/RaffleDetail';
+import PaymentResult    from './pages/PaymentResult';
+import ValidateTicket   from './pages/ValidateTicket';
+import ValidateWinner   from './pages/ValidateWinner';
+import DrawRaffle       from './pages/DrawRaffle';
 
-const queryClient = new QueryClient();
-
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <div className="min-h-screen bg-dark-950 text-white selection:bg-primary-500/30">
-            <Navbar />
-            <div className="pt-20 pb-10">
-              <Routes>
-                <Route path="/" element={<Navigate to="/login" replace />} />
-                <Route path="/rifa/:id" element={<RifaDetail />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-              </Routes>
-            </div>
-          </div>
-        </Router>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
+function Protected({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  return user ? children : <Navigate to="/login" replace />;
 }
 
-export default App;
+function DesktopOnly({ children }) {
+  const isMobile = useIsMobile();
+  if (isMobile) return <Navigate to="/" replace />;
+  return children;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Navbar />
+        <Routes>
+          <Route path="/"               element={<Home />} />
+          <Route path="/login"          element={<Login />} />
+          <Route path="/register"       element={<Register />} />
+          <Route path="/raffle/:id"     element={<RaffleDetail />} />
+          <Route path="/raffle/:id/draw" element={<Protected><DesktopOnly><DrawRaffle /></DesktopOnly></Protected>} />
+          <Route path="/payment/result" element={<PaymentResult />} />
+          <Route path="/validate/:code" element={<ValidateTicket />} />
+          <Route path="/validar-ganador" element={<Protected><DesktopOnly><ValidateWinner /></DesktopOnly></Protected>} />
+          <Route path="/dashboard"      element={<Protected><DesktopOnly><Dashboard /></DesktopOnly></Protected>} />
+          <Route path="/create"         element={<Protected><CreateRaffle /></Protected>} />
+          <Route path="*"               element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
