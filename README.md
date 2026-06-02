@@ -32,18 +32,42 @@ npm run dev
 
 La app levanta por defecto en `http://localhost:5173`.
 
-## Configuración de API (proxy)
+## Configuración de API Backend
 
-En `vite.config.js` existe un proxy para enrutar `/api` hacia el backend.
+El frontend se conecta al backend de dos maneras según el entorno:
 
-- Por defecto: `http://localhost:3001`
-- Opcional: define `VITE_API_PROXY_TARGET` para apuntar a otro host
+### Desarrollo (`npm run dev`)
 
-Ejemplo (PowerShell):
+- Usa el **proxy de Vite** configurado en `vite.config.js`
+- Por defecto apunta al backend en Vercel (ver `.env.development`)
+- Variable: `VITE_API_PROXY_TARGET`
+- Las peticiones a `/api/*` son redirigidas automáticamente al backend
 
-```powershell
-$env:VITE_API_PROXY_TARGET="http://localhost:3001"
-npm run dev
+### Producción (`npm run build`)
+
+- Usa `VITE_API_URL` para apuntar directamente al backend (ver `.env.production`)
+- No usa proxy, hace peticiones directas a la URL del backend
+
+### Variables de entorno
+
+**`.env.development`** (desarrollo):
+
+```bash
+VITE_API_PROXY_TARGET=https://rifas-backend-djv8bs9su-manriquerecinos-projects.vercel.app
+```
+
+**`.env.production`** (producción):
+
+```bash
+VITE_API_URL=https://rifas-backend-djv8bs9su-manriquerecinos-projects.vercel.app/api
+```
+
+### Para usar backend local
+
+Crea un archivo `.env.development.local` (no se sube a git):
+
+```bash
+VITE_API_PROXY_TARGET=http://localhost:3001
 ```
 
 ## Scripts
