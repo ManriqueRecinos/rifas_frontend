@@ -121,8 +121,9 @@ export default function DrawRaffle() {
 
     const normalizedWinnerCount = Math.max(1, Math.min(parseInt(winnerCount || '1', 10), remainingTickets.length));
     const currentWheelTickets = remainingTickets.length > 0 ? remainingTickets : tickets;
+    const requestedDrawSize = Math.max(0, parseInt(drawSize || '0', 10));
 
-    if (remainingTickets.length <= normalizedWinnerCount) {
+    if (remainingTickets.length <= normalizedWinnerCount || requestedDrawSize === 0) {
       const finalWinners = shuffle(remainingTickets).slice(0, normalizedWinnerCount);
       setDrawing(true);
       setStatusMessage('Giro final para revelar los ganadores...');
@@ -133,7 +134,8 @@ export default function DrawRaffle() {
       }
 
       try {
-        await persistRound(selectedTicketIds, finalWinners.map((ticket) => ticket.id));
+        const finalEliminated = remainingTickets.filter(t => !finalWinners.find(w => w.id === t.id));
+        await persistRound([...selectedTicketIds, ...finalEliminated.map(t => t.id)], finalWinners.map((ticket) => ticket.id));
         setWinnerTicketIds(finalWinners.map((ticket) => ticket.id));
         setStatusMessage(`${finalWinners.length} ganador${finalWinners.length > 1 ? 'es' : ''} definido${finalWinners.length > 1 ? 's' : ''} y guardado${finalWinners.length > 1 ? 's' : ''}.`);
       } catch (err) {
@@ -146,13 +148,8 @@ export default function DrawRaffle() {
 
     // Modalidad de eliminación uno por uno
     const maxEliminations = Math.max(0, remainingTickets.length - normalizedWinnerCount);
-    const roundSize = Math.min(Math.max(parseInt(drawSize || '0', 10), 0), maxEliminations);
+    const roundSize = Math.min(requestedDrawSize, maxEliminations);
     const roundTickets = shuffle(remainingTickets);
-    
-    if (roundSize === 0) {
-      setStatusMessage('Debes ingresar al menos 1 descalificado o ya estás listo para sacar ganadores.');
-      return;
-    }
     
     setDrawing(true);
     setStatusMessage(`Iniciando ronda de ${roundSize} eliminación(es)...`);
