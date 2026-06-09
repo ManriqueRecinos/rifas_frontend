@@ -289,58 +289,70 @@ export default function RaffleDetail() {
           {tickets.length === 0 ? (
             <p style={{ color: 'var(--text3)', fontSize: '14px' }}>Aún no se han vendido tickets para esta rifa.</p>
           ) : (
-            <div className="tickets-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-              {tickets.map(t => (
-                <div key={t.id} className="ticket-card" style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '20px', color: 'var(--accent)' }}>Ticket #{t.ticket_number}</span>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      {raffle.winning_ticket_id === t.id && (
-                        <span style={{ fontSize: '11px', textTransform: 'uppercase', color: '#4ade80', fontWeight: 800 }}>Ganador</span>
-                      )}
-                      <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text3)' }}>{new Date(t.purchased_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ fontSize: '14px', color: 'var(--text)' }}>
-                      <strong>Nombre:</strong> {t.buyer_name || 'Desconocido'}
-                    </div>
-                    <div style={{ fontSize: '14px', color: 'var(--text2)' }}>
-                      <strong>Correo:</strong> <span style={{ fontFamily: 'monospace' }}>{maskEmail(t.buyer_email)}</span>
-                    </div>
-                    <div style={{ fontSize: '14px', color: 'var(--text2)' }}>
-                      <strong>Teléfono:</strong> <span style={{ fontFamily: 'monospace' }}>{maskPhone(t.buyer_phone || t.phone)}</span>
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '4px', display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Monto: ${parseFloat(t.amount_paid).toFixed(2)}</span>
-                      <span>Método: {t.wompi_transaction_id ? 'Wompi' : 'Efectivo'}</span>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
-                    <button
-                      type="button"
-                      onClick={() => handleSendTicketPdf(t.id)}
-                      disabled={sendingPdfId === t.id}
-                      style={{ background: 'transparent', color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: '8px', padding: '8px 12px', fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      {sendingPdfId === t.id ? 'Enviando PDF...' : 'Reenviar PDF por correo'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDownloadTicketPdf(t.id, t.ticket_number)}
-                      disabled={downloadingPdfId === t.id}
-                      style={{ background: 'var(--accent)', color: '#111', border: 'none', borderRadius: '8px', padding: '8px 12px', fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      {downloadingPdfId === t.id ? 'Generando PDF...' : '📄 Descargar PDF'}
-                    </button>
-                    {t.ticket_pdf_url && (
-                      <a href={t.ticket_pdf_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: 'var(--accent)', textDecoration: 'underline', alignSelf: 'center', fontWeight: 'bold' }}>
-                        Abrir PDF guardado
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
+            <div className="tickets-table-wrapper" style={{ overflowX: 'auto', background: 'var(--bg2)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <table className="tickets-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+                <thead style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border)' }}>
+                  <tr>
+                    <th style={{ padding: '12px 16px', color: 'var(--text3)', fontWeight: 600 }}>Ticket</th>
+                    <th style={{ padding: '12px 16px', color: 'var(--text3)', fontWeight: 600 }}>Comprador</th>
+                    <th style={{ padding: '12px 16px', color: 'var(--text3)', fontWeight: 600 }}>Contacto</th>
+                    <th style={{ padding: '12px 16px', color: 'var(--text3)', fontWeight: 600 }}>Fecha</th>
+                    <th style={{ padding: '12px 16px', color: 'var(--text3)', fontWeight: 600 }}>Pago</th>
+                    <th style={{ padding: '12px 16px', color: 'var(--text3)', fontWeight: 600 }}>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tickets.map(t => (
+                    <tr key={t.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '18px', color: 'var(--accent)' }}>#{t.ticket_number}</span>
+                        {raffle.winning_ticket_id === t.id && (
+                          <span style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: '#4ade80', fontWeight: 800, marginTop: '4px' }}>Ganador</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text)' }}>
+                        {t.buyer_name || 'Desconocido'}
+                      </td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text2)' }}>
+                        <div style={{ fontFamily: 'monospace' }}>{maskEmail(t.buyer_email)}</div>
+                        <div style={{ fontFamily: 'monospace', fontSize: '12px', marginTop: '2px' }}>{maskPhone(t.buyer_phone || t.phone)}</div>
+                      </td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text2)' }}>
+                        {new Date(t.purchased_at).toLocaleDateString()}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ color: 'var(--text)' }}>${parseFloat(t.amount_paid).toFixed(2)}</div>
+                        <div style={{ color: 'var(--text3)', fontSize: '12px', marginTop: '2px' }}>{t.wompi_transaction_id ? 'Wompi' : 'Efectivo'}</div>
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleSendTicketPdf(t.id)}
+                            disabled={sendingPdfId === t.id}
+                            style={{ background: 'transparent', color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                          >
+                            {sendingPdfId === t.id ? '...' : 'Reenviar PDF'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadTicketPdf(t.id, t.ticket_number)}
+                            disabled={downloadingPdfId === t.id}
+                            style={{ background: 'var(--accent)', color: '#111', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                          >
+                            {downloadingPdfId === t.id ? '...' : 'Descargar'}
+                          </button>
+                          {t.ticket_pdf_url && (
+                            <a href={t.ticket_pdf_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: 'var(--accent)', textDecoration: 'underline', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                              Ver
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

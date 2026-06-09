@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import { Wheel } from 'react-custom-roulette';
 import './DrawRaffle.css';
 
 function shuffle(items) {
@@ -27,6 +28,26 @@ export default function DrawRaffle() {
   const [selectedTicketIds, setSelectedTicketIds] = useState([]);
   const [winnerTicketIds, setWinnerTicketIds] = useState([]);
   const [statusMessage, setStatusMessage] = useState('');
+  const [mustSpin, setMustSpin] = useState(false);
+  const [prizeNumber, setPrizeNumber] = useState(0);
+  const spinResolverRef = useRef(null);
+
+  const spinTo = async (ticketId, currentWheelTickets) => {
+    const targetIndex = currentWheelTickets.findIndex((t) => t.id === ticketId);
+    setPrizeNumber(targetIndex >= 0 ? targetIndex : 0);
+    setMustSpin(true);
+    return new Promise((resolve) => {
+      spinResolverRef.current = resolve;
+    });
+  };
+
+  const handleStopSpinning = () => {
+    setMustSpin(false);
+    if (spinResolverRef.current) {
+      spinResolverRef.current();
+      spinResolverRef.current = null;
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -99,17 +120,16 @@ export default function DrawRaffle() {
     }
 
     const normalizedWinnerCount = Math.max(1, Math.min(parseInt(winnerCount || '1', 10), remainingTickets.length));
+    const currentWheelTickets = remainingTickets.length > 0 ? remainingTickets : tickets;
 
     if (remainingTickets.length <= normalizedWinnerCount) {
       const finalWinners = shuffle(remainingTickets).slice(0, normalizedWinnerCount);
       setDrawing(true);
       setStatusMessage('Giro final para revelar los ganadores...');
 
-      for (let index = 0; index < 12; index += 1) {
-        setActiveTicketId(finalWinners[index % finalWinners.length]?.id || null);
-        setWheelRotation((value) => value + 90);
-        // eslint-disable-next-line no-await-in-loop
-        await sleep(90);
+      setActiveTicketId(finalWinners[0]?.id || null);
+      if (finalWinners.length > 0) {
+        await spinTo(finalWinners[0].id, currentWheelTickets);
       }
 
       try {
@@ -124,50 +144,48 @@ export default function DrawRaffle() {
       return;
     }
 
+    // Modalidad de eliminación uno por uno
     const maxEliminations = Math.max(1, remainingTickets.length - normalizedWinnerCount);
     const roundSize = Math.min(Math.max(parseInt(drawSize || '1', 10), 1), maxEliminations);
     const roundTickets = shuffle(remainingTickets);
-    const eliminatedRound = roundTickets.slice(0, roundSize);
-    const survivorPool = roundTickets.slice(roundSize);
-
+    
     setDrawing(true);
-    setStatusMessage('Girando la ruleta...');
-
-    const animationSequence = shuffle(roundTickets);
-    for (let index = 0; index < 14; index += 1) {
-      const ticket = animationSequence[index % animationSequence.length];
-      setActiveTicketId(ticket?.id || null);
-      setWheelRotation((value) => value + 60);
-      // Intencionalmente no usamos timers largos para mantener la interacción fluida.
-      // Este sleep da tiempo a que la ruleta marque el recorrido antes de resolver.
-      // eslint-disable-next-line no-await-in-loop
-      await sleep(90);
-    }
-
-    eliminatedRound.forEach((ticket) => {
-      setSelectedTicketIds((current) => [...new Set([...current, ticket.id])]);
-    });
+    setStatusMessage(`Iniciando ronda de ${roundSize} eliminación(es)...`);
+    
+    let currentSelectedEliminatedIds = [...selectedTicketIds];
+    let newlyEliminated = [];
 
     try {
-      await persistRound(eliminatedRound.map((ticket) => ticket.id));
-      setStatusMessage(`${eliminatedRound.length} participante${eliminatedRound.length > 1 ? 's' : ''} eliminado${eliminatedRound.length > 1 ? 's' : ''}.`);
-
-      if (survivorPool.length <= normalizedWinnerCount) {
-        const finalWinners = shuffle(survivorPool).slice(0, normalizedWinnerCount);
-        setStatusMessage('Giro final para revelar los ganadores...');
-        for (let index = 0; index < 10; index += 1) {
-          setActiveTicketId(finalWinners[index % finalWinners.length]?.id || null);
-          setWheelRotation((value) => value + 72);
-          // eslint-disable-next-line no-await-in-loop
-          await sleep(100);
+      for (let i = 0; i < roundSize; i++) {
+        const ticketToEliminate = roundTickets[i];
+        setStatusMessage(`Girando la ruleta para eliminar (${i + 1}/${roundSize})...`);
+        
+        setActiveTicketId(ticketToEliminate.id);
+        await spinTo(ticketToEliminate.id, currentWheelTickets);
+        await sleep(600);
+        
+        currentSelectedEliminatedIds.push(ticketToEliminate.id);
+        newlyEliminated.push(ticketToEliminate);
+        setSelectedTicketIds([...currentSelectedEliminatedIds]);
+        
+        if (i < roundSize - 1) {
+           await sleep(800); 
         }
-        await persistRound([...selectedTicketIds, ...eliminatedRound.map((ticket) => ticket.id)], finalWinners.map((ticket) => ticket.id));
-        setWinnerTicketIds(finalWinners.map((ticket) => ticket.id));
-        setStatusMessage(`${finalWinners.length} ganador${finalWinners.length > 1 ? 'es' : ''} definido${finalWinners.length > 1 ? 's' : ''} y guardado${finalWinners.length > 1 ? 's' : ''}.`);
       }
+
+      setStatusMessage('Guardando resultados de la ronda...');
+      await persistRound(newlyEliminated.map((ticket) => ticket.id));
+      setStatusMessage(`${newlyEliminated.length} participante${newlyEliminated.length > 1 ? 's' : ''} eliminado${newlyEliminated.length > 1 ? 's' : ''}.`);
+      
+      const newRemainingCount = remainingTickets.length - newlyEliminated.length;
+      if (newRemainingCount <= normalizedWinnerCount) {
+         setStatusMessage('Descalificados terminados. El siguiente giro será para los ganadores.');
+      }
+      
     } catch (err) {
       setStatusMessage(err.response?.data?.error || 'No se pudo guardar el sorteo.');
     } finally {
+      setActiveTicketId(null);
       setDrawing(false);
     }
   };
@@ -181,6 +199,23 @@ export default function DrawRaffle() {
   }
 
   const wheelTickets = remainingTickets.length > 0 ? remainingTickets : tickets;
+
+  const rouletteData = wheelTickets.length > 1 ? wheelTickets.map((t) => {
+    const isEliminated = selectedTicketIds.includes(t.id) || t.status === 'eliminated';
+    return {
+      option: `#${t.ticket_number}`,
+      style: {
+        backgroundColor: isEliminated ? '#1a1a1a' : (t.id === activeTicketId ? '#4ade80' : '#0f3460'),
+        textColor: isEliminated ? '#444' : '#fff'
+      }
+    };
+  }) : (wheelTickets.length === 1 ? [
+    { option: `#${wheelTickets[0].ticket_number}`, style: { backgroundColor: '#0f3460', textColor: '#fff' } },
+    { option: `Ganador`, style: { backgroundColor: '#4ade80', textColor: '#111' } }
+  ] : [
+    { option: 'Vacío', style: { backgroundColor: '#1a1a1a', textColor: '#444' } },
+    { option: 'Vacío', style: { backgroundColor: '#1a1a1a', textColor: '#444' } }
+  ]);
 
   return (
     <div className="draw-page container">
@@ -199,24 +234,24 @@ export default function DrawRaffle() {
       <div className="draw-layout">
         <section className="draw-wheel-panel">
           <div className="draw-wheel-wrap">
-            <div className="draw-pointer" />
-            <div className="draw-wheel" style={{ transform: `rotate(${wheelRotation}deg)` }}>
-              {wheelTickets.map((ticket, index) => {
-                const angle = (360 / Math.max(wheelTickets.length, 1)) * index;
-                const isActive = ticket.id === activeTicketId;
-                const isEliminated = ticket.status === 'eliminated' || selectedTicketIds.includes(ticket.id);
-                const radius = Math.min(150, 95 + Math.max(0, wheelTickets.length - 8) * 2);
-                return (
-                  <div
-                    key={ticket.id}
-                    className={`draw-slice ${isActive ? 'active' : ''} ${isEliminated ? 'eliminated' : ''}`}
-                    style={{ transform: `rotate(${angle}deg) translateY(-${radius}px)` }}
-                  >
-                    <span>#{ticket.ticket_number}</span>
-                    <small>{ticket.buyer_name || 'Desconocido'}</small>
-                  </div>
-                );
-              })}
+            <div className="draw-wheel-container" style={{ position: 'relative', zIndex: 10 }}>
+              <Wheel
+                mustStartSpinning={mustSpin}
+                prizeNumber={prizeNumber}
+                data={rouletteData}
+                onStopSpinning={handleStopSpinning}
+                backgroundColors={['#0f3460', '#1a1a2e']}
+                textColors={['#ffffff']}
+                outerBorderColor="#e8c840"
+                outerBorderWidth={4}
+                innerBorderColor="#e8c840"
+                innerBorderWidth={2}
+                innerRadius={15}
+                radiusLineColor="#e8c840"
+                radiusLineWidth={1}
+                fontSize={16}
+                spinDuration={0.4}
+              />
             </div>
             <div className="draw-center-card">
               {winnerTickets.length > 0 ? (
