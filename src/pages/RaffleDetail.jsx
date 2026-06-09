@@ -252,26 +252,28 @@ export default function RaffleDetail() {
           </div>
 
           {/* Botón de compra — abre modal */}
-          {raffle.status === 'active' && !soldOut ? (
-            <button
-              className={`buy-btn ${buying ? 'loading' : ''}`}
-              onClick={handleOpenPurchase}
-              disabled={buying || !raffle.wompi_url_enlace}
-            >
-              {buying ? (
-                <span>Preparando pago...</span>
-              ) : (
-                <>
-                  <span className="buy-btn-icon">💳</span>
-                  <span>Comprar Ticket — ${parseFloat(raffle.ticket_price).toFixed(2)}</span>
-                </>
-              )}
-            </button>
-          ) : soldOut ? (
-            <div className="sold-out-msg">🚫 Esta rifa está agotada</div>
-          ) : (
-            <div className="sold-out-msg">⛔ Esta rifa ya no está disponible</div>
-          )}
+          <div className="buy-btn-container">
+            {raffle.status === 'active' && !soldOut ? (
+              <button
+                className={`buy-btn ${buying ? 'loading' : ''}`}
+                onClick={handleOpenPurchase}
+                disabled={buying || !raffle.wompi_url_enlace}
+              >
+                {buying ? (
+                  <span>Preparando pago...</span>
+                ) : (
+                  <>
+                    <span className="buy-btn-icon">🎟️</span>
+                    <span>¡Comprar Ticket Ahora! — ${parseFloat(raffle.ticket_price).toFixed(2)}</span>
+                  </>
+                )}
+              </button>
+            ) : soldOut ? (
+              <div className="sold-out-msg">🚫 Esta rifa está agotada</div>
+            ) : (
+              <div className="sold-out-msg">⛔ Esta rifa ya no está disponible</div>
+            )}
+          </div>
 
           {raffle.wompi_url_enlace && (
             <p className="wompi-note">

@@ -21,7 +21,10 @@ export default function DrawRaffle() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [drawing, setDrawing] = useState(false);
-  const [drawSize, setDrawSize] = useState(5);
+  
+  // Modes: 'quick' (Direct to winner) or 'gradual' (Elimination)
+  const [drawMode, setDrawMode] = useState('quick');
+  const [drawSize, setDrawSize] = useState(1);
   const [winnerCount, setWinnerCount] = useState(1);
   const [activeTicketId, setActiveTicketId] = useState(null);
   const [wheelRotation, setWheelRotation] = useState(0);
@@ -121,7 +124,7 @@ export default function DrawRaffle() {
 
     const normalizedWinnerCount = Math.max(1, Math.min(parseInt(winnerCount || '1', 10), remainingTickets.length));
     const currentWheelTickets = remainingTickets.length > 0 ? remainingTickets : tickets;
-    const requestedDrawSize = Math.max(0, parseInt(drawSize || '0', 10));
+    const requestedDrawSize = drawMode === 'quick' ? 0 : Math.max(0, parseInt(drawSize || '0', 10));
 
     if (remainingTickets.length <= normalizedWinnerCount || requestedDrawSize === 0) {
       const finalWinners = shuffle(remainingTickets).slice(0, normalizedWinnerCount);
@@ -236,7 +239,7 @@ export default function DrawRaffle() {
       <div className="draw-layout">
         <section className="draw-wheel-panel">
           <div className="draw-wheel-wrap">
-            <div className="draw-wheel-container" style={{ position: 'relative', zIndex: 10 }}>
+            <div className="draw-wheel-container">
               <Wheel
                 mustStartSpinning={mustSpin}
                 prizeNumber={prizeNumber}
@@ -281,16 +284,51 @@ export default function DrawRaffle() {
 
         <aside className="draw-side">
           <div className="draw-card">
-            <label>Cantidad de descalificados por giro</label>
-            <input
-              type="number"
-              min="0"
-              max={Math.max(0, remainingTickets.length - Math.max(1, parseInt(winnerCount || '1', 10)))}
-              value={drawSize}
-              onChange={(e) => setDrawSize(Math.max(0, parseInt(e.target.value || '0', 10)))}
-              disabled={drawing || raffle.status === 'completed'}
-            />
-            <label>Cantidad de ganadores</label>
+            <h3 style={{ marginBottom: '16px', color: 'var(--text)' }}>Modo de Sorteo</h3>
+            
+            <div className="draw-modes" style={{ display: 'flex', gap: '8px', marginBottom: '24px', background: 'var(--bg2)', padding: '6px', borderRadius: '12px' }}>
+              <button 
+                className={`tab-btn ${drawMode === 'quick' ? 'active' : ''}`}
+                onClick={() => setDrawMode('quick')}
+                disabled={drawing || raffle.status === 'completed'}
+                style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', background: drawMode === 'quick' ? 'var(--bg3)' : 'transparent', color: drawMode === 'quick' ? 'var(--text)' : 'var(--text3)', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
+              >
+                ⚡ Rápido
+              </button>
+              <button 
+                className={`tab-btn ${drawMode === 'gradual' ? 'active' : ''}`}
+                onClick={() => setDrawMode('gradual')}
+                disabled={drawing || raffle.status === 'completed'}
+                style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', background: drawMode === 'gradual' ? 'var(--bg3)' : 'transparent', color: drawMode === 'gradual' ? 'var(--text)' : 'var(--text3)', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
+              >
+                ⏳ Eliminación
+              </button>
+            </div>
+
+            {drawMode === 'quick' && (
+              <p style={{ fontSize: '13px', color: 'var(--text2)', marginBottom: '20px', lineHeight: '1.4' }}>
+                <strong>Sorteo Rápido:</strong> La ruleta girará y seleccionará automáticamente a los ganadores, eliminando al resto. Ideal para terminar rápido.
+              </p>
+            )}
+
+            {drawMode === 'gradual' && (
+              <>
+                <p style={{ fontSize: '13px', color: 'var(--text2)', marginBottom: '16px', lineHeight: '1.4' }}>
+                  <strong>Sorteo por Eliminación:</strong> La ruleta irá descartando participantes poco a poco en cada giro, generando suspenso antes del ganador.
+                </p>
+                <label>Cantidad de descalificados por giro</label>
+                <input
+                  type="number"
+                  min="0"
+                  max={Math.max(0, remainingTickets.length - Math.max(1, parseInt(winnerCount || '1', 10)))}
+                  value={drawSize}
+                  onChange={(e) => setDrawSize(Math.max(0, parseInt(e.target.value || '0', 10)))}
+                  disabled={drawing || raffle.status === 'completed'}
+                />
+              </>
+            )}
+
+            <label>Cantidad de ganadores finales</label>
             <input
               type="number"
               min="1"
