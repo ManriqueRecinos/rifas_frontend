@@ -7,7 +7,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     proxy: {
-      '/api': process.env.VITE_API_PROXY_TARGET || 'http://localhost:3001',
+      '/api': process.env.VITE_API_PROXY_TARGET || 'https://rifasbackend-production.up.railway.app',
     },
   },
   preview: {

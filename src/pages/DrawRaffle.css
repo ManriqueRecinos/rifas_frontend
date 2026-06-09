@@ -8,10 +8,11 @@
 .draw-badge { padding:6px 10px; border-radius:999px; background:var(--bg2); border:1px solid var(--border); color:var(--text3); font-size:11px; text-transform:uppercase; letter-spacing:1px; }
 .draw-badge.completed { color:#818cf8; background:rgba(61,90,241,.15); }
 .draw-badge.active { color:#4ade80; background:rgba(34,197,94,.15); }
-.draw-layout { display:flex; flex-direction: column; align-items: center; gap:32px; width: 100%; }
-.draw-wheel-panel { width: 100%; max-width: 650px; }
-.draw-side { width: 100%; max-width: 1000px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; align-items: start; }
-.draw-wheel-wrap { position:relative; aspect-ratio: 1 / 1; width: 100%; max-height: 75vh; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at center, rgba(232,200,64,.08), transparent 50%), var(--bg2); border:1px solid var(--border); border-radius:24px; overflow:hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.4); }
+.draw-layout { display:grid; grid-template-columns:minmax(0,1.2fr) 360px; gap:24px; align-items:start; }
+@media (max-width: 980px) { .draw-layout { grid-template-columns:1fr; } }
+.draw-wheel-panel { display:flex; flex-direction:column; align-items:center; width: 100%; }
+.draw-side { display:flex; flex-direction:column; gap:16px; width: 100%; }
+.draw-wheel-wrap { position:relative; aspect-ratio: 1 / 1; width: 100%; max-width: 450px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at center, rgba(232,200,64,.08), transparent 50%), var(--bg2); border:1px solid var(--border); border-radius:50%; overflow:hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.4); margin: 0 auto; }
 .draw-wheel-container { position: relative; z-index: 10; width: 100%; max-width: 550px; display: flex; justify-content: center; align-items: center; }
 .draw-center-card { position:absolute; z-index:2; width:170px; height:170px; border-radius:50%; background:rgba(8,8,12,.9); border:1px solid rgba(232,200,64,.24); display:flex; align-items:center; justify-content:center; flex-direction:column; text-align:center; padding:16px; box-shadow:0 0 0 12px rgba(0,0,0,.12); }
 .draw-center-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); }
@@ -33,16 +34,19 @@
 .winner-pill { padding:12px 14px; border-radius:14px; background:linear-gradient(135deg, rgba(232,200,64,.14), rgba(255,255,255,.03)); border:1px solid rgba(232,200,64,.28); }
 .winner-pill strong { font-size:24px; }
 .winner-pill p { margin-top:4px; }
-.winner-focus { background:linear-gradient(180deg, rgba(232,200,64,.12), rgba(255,255,255,.03)); }
-.winner-focus strong { display:block; font-family:'Bebas Neue',sans-serif; font-size:48px; color:var(--accent); letter-spacing:1px; }
-.winner-focus p { color:var(--text2); margin-top:8px; }
+.winner-banner { width: 100%; max-width: 600px; margin-bottom: 24px; text-align: center; padding: 24px; background: linear-gradient(135deg, rgba(232,200,64,0.15), rgba(255,255,255,0.05)); border: 1px solid var(--accent); border-radius: 16px; box-shadow: 0 8px 32px rgba(232,200,64,0.2); animation: scaleIn 0.3s ease-out; }
+.winner-banner h3 { font-size: 16px; color: var(--text3); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+.winner-banner strong { display: block; font-family: 'Bebas Neue', sans-serif; font-size: 64px; color: var(--accent); letter-spacing: 2px; line-height: 1; margin-bottom: 8px; text-shadow: 0 4px 12px rgba(232,200,64,0.4); }
+.winner-banner p { font-size: 20px; color: #fff; font-weight: 600; }
+
+@keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 @media (max-width: 768px) {
 	.draw-page { padding: 16px 0 56px; }
 	.draw-header { align-items: flex-start; margin-bottom: 16px; }
 	.draw-title { font-size: 34px; }
 	.draw-layout { gap: 16px; }
-	.draw-wheel-wrap { max-height: unset; border-radius: 16px; }
+	.draw-wheel-wrap { max-width: 320px; border-radius: 50%; }
 	.draw-center-card { width: 120px; height: 120px; padding: 10px; }
 	.draw-center-card strong { font-size: 20px; margin-top: 4px; }
     .draw-center-card small { font-size: 10px; }

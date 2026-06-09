@@ -207,19 +207,21 @@ export default function DrawRaffle() {
 
   const rouletteData = wheelTickets.length > 1 ? wheelTickets.map((t) => {
     const isEliminated = selectedTicketIds.includes(t.id) || t.status === 'eliminated';
+    const nameStr = t.buyer_name ? t.buyer_name.split(' ')[0] : 'Anónimo';
+    const label = `#${t.ticket_number} - ${nameStr.substring(0,10)}`;
     return {
-      option: `#${t.ticket_number}`,
+      option: label,
       style: {
-        backgroundColor: isEliminated ? '#1a1a1a' : (t.id === activeTicketId ? '#4ade80' : '#0f3460'),
-        textColor: isEliminated ? '#444' : '#fff'
+        backgroundColor: isEliminated ? '#ef4444' : '#0f3460',
+        textColor: isEliminated ? '#fff' : '#fff'
       }
     };
   }) : (wheelTickets.length === 1 ? [
     { option: `#${wheelTickets[0].ticket_number}`, style: { backgroundColor: '#0f3460', textColor: '#fff' } },
     { option: `Ganador`, style: { backgroundColor: '#4ade80', textColor: '#111' } }
   ] : [
-    { option: 'Vacío', style: { backgroundColor: '#1a1a1a', textColor: '#444' } },
-    { option: 'Vacío', style: { backgroundColor: '#1a1a1a', textColor: '#444' } }
+    { option: 'Vacío', style: { backgroundColor: '#ef4444', textColor: '#fff' } },
+    { option: 'Vacío', style: { backgroundColor: '#ef4444', textColor: '#fff' } }
   ]);
 
   return (
@@ -238,6 +240,14 @@ export default function DrawRaffle() {
 
       <div className="draw-layout">
         <section className="draw-wheel-panel">
+          {primaryWinnerTicket && (
+            <div className="winner-banner">
+              <h3>🎉 ¡Gran Ganador! 🎉</h3>
+              <strong>#{primaryWinnerTicket.ticket_number}</strong>
+              <p>{primaryWinnerTicket.buyer_name || 'Desconocido'}</p>
+            </div>
+          )}
+
           <div className="draw-wheel-wrap">
             <div className="draw-wheel-container">
               <Wheel
@@ -350,43 +360,6 @@ export default function DrawRaffle() {
             </button>
             {statusMessage && <p className="draw-message">{statusMessage}</p>}
           </div>
-
-          <div className="draw-card">
-            <h3>Eliminados</h3>
-            {eliminatedTickets.length === 0 ? (
-              <p className="draw-empty">Todavía no hay eliminados.</p>
-            ) : (
-              <ul className="draw-list">
-                {eliminatedTickets.map((ticket) => (
-                  <li key={ticket.id}>Ticket #{ticket.ticket_number} - {ticket.buyer_name || 'Desconocido'}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="draw-card winner-card">
-            <h3>Ganadores</h3>
-            {winnerTickets.length > 0 ? (
-              <div className="winner-list">
-                {winnerTickets.map((ticket) => (
-                  <div key={ticket.id} className="winner-pill">
-                    <strong>#{ticket.ticket_number}</strong>
-                    <p>{ticket.buyer_name || 'Desconocido'}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="draw-empty">Aún no definido.</p>
-            )}
-          </div>
-
-          {primaryWinnerTicket && (
-            <div className="draw-card winner-focus">
-              <h3>Ganador principal</h3>
-              <strong>#{primaryWinnerTicket.ticket_number}</strong>
-              <p>{primaryWinnerTicket.buyer_name || 'Desconocido'}</p>
-            </div>
-          )}
         </aside>
       </div>
     </div>
