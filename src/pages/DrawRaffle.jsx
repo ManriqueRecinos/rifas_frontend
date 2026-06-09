@@ -145,9 +145,14 @@ export default function DrawRaffle() {
     }
 
     // Modalidad de eliminación uno por uno
-    const maxEliminations = Math.max(1, remainingTickets.length - normalizedWinnerCount);
-    const roundSize = Math.min(Math.max(parseInt(drawSize || '1', 10), 1), maxEliminations);
+    const maxEliminations = Math.max(0, remainingTickets.length - normalizedWinnerCount);
+    const roundSize = Math.min(Math.max(parseInt(drawSize || '0', 10), 0), maxEliminations);
     const roundTickets = shuffle(remainingTickets);
+    
+    if (roundSize === 0) {
+      setStatusMessage('Debes ingresar al menos 1 descalificado o ya estás listo para sacar ganadores.');
+      return;
+    }
     
     setDrawing(true);
     setStatusMessage(`Iniciando ronda de ${roundSize} eliminación(es)...`);
@@ -282,10 +287,10 @@ export default function DrawRaffle() {
             <label>Cantidad de descalificados por giro</label>
             <input
               type="number"
-              min="1"
-              max={Math.max(1, remainingTickets.length - Math.max(1, parseInt(winnerCount || '1', 10)))}
+              min="0"
+              max={Math.max(0, remainingTickets.length - Math.max(1, parseInt(winnerCount || '1', 10)))}
               value={drawSize}
-              onChange={(e) => setDrawSize(Math.max(1, parseInt(e.target.value || '1', 10)))}
+              onChange={(e) => setDrawSize(Math.max(0, parseInt(e.target.value || '0', 10)))}
               disabled={drawing || raffle.status === 'completed'}
             />
             <label>Cantidad de ganadores</label>
